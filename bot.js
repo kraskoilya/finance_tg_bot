@@ -1,3 +1,15 @@
+const express = require('express')
+const app = express()
+const PORT = process.env.PORT || 3000
+
+app.get('/', (req, res) => {
+  res.send('Bot is running!')
+})
+
+app.listen(PORT, () => {
+  console.log(`Web server running on port ${PORT}`)
+})
+
 const TelegramBot = require('node-telegram-bot-api')
 const { TELEGRAM_TOKEN, ALLOWED_USER_ID } = require('./config')
 const {
