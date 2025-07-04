@@ -11,7 +11,7 @@ async function addOperation({ type, currency, amount, comment, date }) {
       Валюта: { select: { name: currency } },
       Сумма: { number: amount },
       Дата: { date: { start: date } },
-      Комментарий: { rich_text: comment ? [{ text: { content: comment } }] : [] },
+      Комментарий: { title: comment ? [{ text: { content: comment } }] : [] },
     },
   })
 }
