@@ -75,7 +75,7 @@ const notion = new Client({ auth: NOTION_TOKEN })
 
 function isAllowedUser(msg) {
   const userId = msg.from ? msg.from.id : msg.chat ? msg.chat.id : null
-  if (userId !== ALLOWED_USER_ID) {
+  if (String(userId) !== String(ALLOWED_USER_ID)) {
     console.log('Попытка доступа от чужого пользователя:', userId)
     return false
   }
