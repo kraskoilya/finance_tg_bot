@@ -21,58 +21,11 @@ const {
   handleCurrency,
   handleReport,
 } = require('./handlers/finance')
-const { getState, setState, resetState, isEmptyState } = require('./handlers/state')
+const { getState, resetState, isEmptyState } = require('./handlers/state')
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true })
 
-const NOTION_TOKEN = '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'
-const NOTION_DATABASE_ID = '226b2be08a9a802688a9f0b933f5b8ac?v=226b2be08a9a80f1b94a000caf4c0446'
-
-// Состояния пользователей
-const userStates = {}
-
-// История операций (в памяти)
-const userHistory = {}
-const HISTORY_LIMIT = 10
-
-const CANCEL_BTN = [{ text: '❌ Отмена', callback_data: 'cancel' }]
-const BACK_BTN = [{ text: '⬅️ Назад', callback_data: 'back' }]
-const REPORT_BTN = [{ text: '📊 Отчёт', callback_data: 'report' }]
-
-const TYPE_CHOICES = [
-  [
-    { text: '💸 Доход', callback_data: 'type:доход' },
-    { text: '💰 Расход', callback_data: 'type:расход' },
-  ],
-  REPORT_BTN,
-  CANCEL_BTN,
-]
-const CURRENCY_CHOICES = [
-  [
-    { text: '🇺🇸 Доллар', callback_data: 'currency:доллар' },
-    { text: '🇧🇾 Рубль', callback_data: 'currency:рубль' },
-    { text: '🇬🇪 Лари', callback_data: 'currency:лари' },
-  ],
-  BACK_BTN,
-  CANCEL_BTN,
-]
-const REPORT_PERIOD_CHOICES = [
-  [
-    { text: '7 дней', callback_data: 'report:week' },
-    { text: 'Месяц', callback_data: 'report:month' },
-  ],
-  BACK_BTN,
-  CANCEL_BTN,
-]
-const AMOUNT_MARKUP = {
-  reply_markup: {
-    inline_keyboard: [BACK_BTN, CANCEL_BTN],
-  },
-}
-
-const { Client } = require('@notionhq/client')
-const notion = new Client({ auth: NOTION_TOKEN })
-
+// Проверка доступа пользователя
 function isAllowedUser(msg) {
   const userId = msg.from ? msg.from.id : msg.chat ? msg.chat.id : null
   if (String(userId) !== String(ALLOWED_USER_ID)) {
@@ -82,7 +35,7 @@ function isAllowedUser(msg) {
   return true
 }
 
-// Команды
+// Обработка команд
 bot.onText(/\/start/, msg => {
   if (isAllowedUser(msg)) handleStart(bot, msg)
 })
@@ -99,7 +52,7 @@ bot.onText(/\/total/, msg => {
   if (isAllowedUser(msg)) handleTotal(bot, msg)
 })
 
-// Callback-кнопки
+// Обработка inline-кнопок
 bot.on('callback_query', async query => {
   const chatId = query.message.chat.id
   if (!isAllowedUser(query)) {
@@ -118,19 +71,10 @@ bot.on('callback_query', async query => {
     }
     if (data === 'back') {
       const state = getState(chatId)
-      if (state.currency) {
-        resetState(chatId)
-        bot.sendMessage(chatId, 'Выберите тип операции:', {
-          reply_markup: getTypeKeyboard(),
-        })
-      } else if (state.type) {
-        resetState(chatId)
-        bot.sendMessage(chatId, 'Выберите тип операции:', {
-          reply_markup: getTypeKeyboard(),
-        })
-      } else {
-        bot.sendMessage(chatId, 'Вы уже на первом шаге.')
-      }
+      resetState(chatId)
+      bot.sendMessage(chatId, 'Выберите тип операции:', {
+        reply_markup: getTypeKeyboard(),
+      })
       bot.answerCallbackQuery(query.id)
       return
     }
@@ -166,7 +110,7 @@ bot.on('callback_query', async query => {
   }
 })
 
-// Сообщения (ввод суммы, запуск бота)
+// Обработка обычных сообщений (ввод суммы, запуск бота)
 bot.on('message', msg => {
   const chatId = msg.chat.id
   if (!isAllowedUser(msg)) return

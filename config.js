@@ -4,7 +4,7 @@ module.exports = {
   TELEGRAM_TOKEN: process.env.TELEGRAM_TOKEN,
   NOTION_TOKEN: process.env.NOTION_TOKEN,
   NOTION_DATABASE_ID: process.env.NOTION_DATABASE_ID,
-  ALLOWED_USER_ID: process.env.п,
+  ALLOWED_USER_ID: process.env.ALLOWED_USER_ID,
   HISTORY_LIMIT: 10,
   EMOJI: {
     income: '\ud83d\udcb8',
