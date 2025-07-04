@@ -40,6 +40,7 @@ function handleHistory(bot, msg) {
     .reverse()
     .forEach((op, i) => {
       text += `\n${i + 1}. ${op.date} — ${op.type}, ${op.amount} ${op.currency}`
+      if (op.comment) text += ` (${op.comment})`
     })
   bot.sendMessage(msg.chat.id, text)
 }

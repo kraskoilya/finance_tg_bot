@@ -3,7 +3,7 @@ const { NOTION_TOKEN, NOTION_DATABASE_ID } = require('./config')
 
 const notion = new Client({ auth: NOTION_TOKEN })
 
-async function addOperation({ type, currency, amount, date }) {
+async function addOperation({ type, currency, amount, comment, date }) {
   return notion.pages.create({
     parent: { database_id: NOTION_DATABASE_ID },
     properties: {
@@ -11,6 +11,7 @@ async function addOperation({ type, currency, amount, date }) {
       Валюта: { select: { name: currency } },
       Сумма: { number: amount },
       Дата: { date: { start: date } },
+      Комментарий: { rich_text: comment ? [{ text: { content: comment } }] : [] },
     },
   })
 }

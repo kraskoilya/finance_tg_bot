@@ -10,20 +10,28 @@ const { getState, setState, resetState, addHistory } = require('./state')
 async function handleAmountInput(bot, msg) {
   const chatId = msg.chat.id
   const state = getState(chatId)
-  const amount = parseFloat(msg.text.replace(',', '.'))
-  if (isNaN(amount) || amount <= 0) {
-    bot.sendMessage(chatId, 'Пожалуйста, введите корректную сумму (только число больше 0).', {
+  const match = msg.text.match(/^\s*([\d.,]+)\s*(.*)$/)
+  let amount = null,
+    comment = ''
+  if (match) {
+    amount = parseFloat(match[1].replace(',', '.'))
+    comment = match[2] ? match[2].trim() : ''
+  }
+  if (!amount || isNaN(amount) || amount <= 0) {
+    bot.sendMessage(chatId, 'Пожалуйста, введите корректную сумму (например: 12.5 такси).', {
       reply_markup: getAmountKeyboard(),
     })
     return
   }
   state.amount = amount
+  state.comment = comment
   const now = new Date()
   const dateStr = now.toISOString().split('T')[0]
   addHistory(chatId, {
     type: state.type,
     currency: state.currency,
     amount: state.amount,
+    comment: state.comment,
     date: dateStr,
   })
   try {
@@ -31,12 +39,15 @@ async function handleAmountInput(bot, msg) {
       type: state.type,
       currency: state.currency,
       amount: state.amount,
+      comment: state.comment,
       date: dateStr,
     })
     bot
       .sendMessage(
         chatId,
-        `Записано в Notion:\nТип: ${state.type}\nВалюта: ${state.currency}\nСумма: ${state.amount}\nДата: ${dateStr}`
+        `Записано в Notion:\nТип: ${state.type}\nВалюта: ${state.currency}\nСумма: ${
+          state.amount
+        }\nКомментарий: ${state.comment || '-'}\nДата: ${dateStr}`
       )
       .then(() => {
         resetState(chatId)
