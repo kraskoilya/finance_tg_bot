@@ -7,7 +7,7 @@ const {
 } = require('./keyboard')
 const { getState, setState, resetState, addHistory } = require('./state')
 
-async function handleAmountInput(bot, msg) {
+async function handleAmountInput(bot, msg, user) {
   const chatId = msg.chat.id
   const state = getState(chatId)
   const match = msg.text.match(/^\s*([\d.,]+)\s*(.*)$/)
@@ -25,6 +25,7 @@ async function handleAmountInput(bot, msg) {
   }
   state.amount = amount
   state.comment = comment
+  state.user = user
   const now = new Date()
   const dateStr = now.toISOString().split('T')[0]
   addHistory(chatId, {
@@ -32,6 +33,7 @@ async function handleAmountInput(bot, msg) {
     currency: state.currency,
     amount: state.amount,
     comment: state.comment,
+    user: state.user,
     date: dateStr,
   })
   try {
@@ -40,6 +42,7 @@ async function handleAmountInput(bot, msg) {
       currency: state.currency,
       amount: state.amount,
       comment: state.comment,
+      user: state.user,
       date: dateStr,
     })
     bot
@@ -47,7 +50,7 @@ async function handleAmountInput(bot, msg) {
         chatId,
         `Записано в Notion:\nТип: ${state.type}\nВалюта: ${state.currency}\nСумма: ${
           state.amount
-        }\nКомментарий: ${state.comment || '-'}\nДата: ${dateStr}`
+        }\nКомментарий: ${state.comment || '-'}\nПользователь: ${state.user}\nДата: ${dateStr}`
       )
       .then(() => {
         resetState(chatId)

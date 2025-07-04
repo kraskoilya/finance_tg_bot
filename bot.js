@@ -11,7 +11,7 @@ app.listen(PORT, () => {
 })
 
 const TelegramBot = require('node-telegram-bot-api')
-const { TELEGRAM_TOKEN, ALLOWED_USER_ID } = require('./config')
+const { TELEGRAM_TOKEN, ALLOWED_USER_ID_1, ALLOWED_USER_ID_2, USERS } = require('./config')
 const {
   getTypeKeyboard,
   getCurrencyKeyboard,
@@ -33,38 +33,31 @@ const {
   handleCurrency,
   handleReport,
 } = require('./handlers/finance')
-const { getState, resetState, isEmptyState } = require('./handlers/state')
+const { getState, resetState, isEmptyState, setState } = require('./handlers/state')
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true })
 
-// Проверка доступа пользователя
 function isAllowedUser(msg) {
-  const userId = msg.from ? msg.from.id : msg.chat ? msg.chat.id : null
-  if (String(userId) !== String(ALLOWED_USER_ID)) {
-    console.log('Попытка доступа от чужого пользователя:', userId)
-    return false
-  }
-  return true
+  const userId = String(msg.from ? msg.from.id : msg.chat ? msg.chat.id : null)
+  return userId === String(ALLOWED_USER_ID_1) || userId === String(ALLOWED_USER_ID_2)
 }
 
-// Обработка команд
 bot.onText(/\/start/, msg => {
-  if (isAllowedUser(msg)) handleStart(bot, msg)
+  if (isAllowedUser(msg)) handleStart(bot, msg, USERS[String(msg.from.id)])
 })
 bot.onText(/\/help/, msg => {
-  if (isAllowedUser(msg)) handleHelp(bot, msg)
+  if (isAllowedUser(msg)) handleHelp(bot, msg, USERS[String(msg.from.id)])
 })
 bot.onText(/\/cancel/, msg => {
-  if (isAllowedUser(msg)) handleCancel(bot, msg)
+  if (isAllowedUser(msg)) handleCancel(bot, msg, USERS[String(msg.from.id)])
 })
 bot.onText(/\/history/, msg => {
-  if (isAllowedUser(msg)) handleHistory(bot, msg)
+  if (isAllowedUser(msg)) handleHistory(bot, msg, USERS[String(msg.from.id)])
 })
 bot.onText(/\/total/, msg => {
-  if (isAllowedUser(msg)) handleTotal(bot, msg)
+  if (isAllowedUser(msg)) handleTotal(bot, msg, USERS[String(msg.from.id)])
 })
 
-// Обработка inline-кнопок
 bot.on('callback_query', async query => {
   const chatId = query.message.chat.id
   if (!isAllowedUser(query)) {
@@ -122,14 +115,15 @@ bot.on('callback_query', async query => {
   }
 })
 
-// Обработка обычных сообщений (ввод суммы, запуск бота)
 bot.on('message', msg => {
   const chatId = msg.chat.id
   if (!isAllowedUser(msg)) return
   if (msg.text && msg.text.startsWith('/')) return
+  const user = USERS[String(msg.from.id)]
   if (isEmptyState(chatId)) {
     if (msg.text === '🚀 Запустить бота') {
       resetState(chatId)
+      setState(chatId, { user })
       bot.sendMessage(chatId, '...', { reply_markup: getRemoveKeyboard() })
       bot.sendMessage(chatId, 'Выберите тип операции:', {
         reply_markup: getTypeKeyboard(),
@@ -143,7 +137,9 @@ bot.on('message', msg => {
   }
   const state = getState(chatId)
   if (state && state.type && state.currency && !state.amount) {
-    handleAmountInput(bot, msg)
+    state.user = user
+    setState(chatId, state)
+    handleAmountInput(bot, msg, user)
   } else if (state && (state.type || state.currency)) {
     bot.sendMessage(
       chatId,
