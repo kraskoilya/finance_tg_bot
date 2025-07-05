@@ -48,9 +48,22 @@ async function handleAmountInput(bot, msg, user) {
     bot
       .sendMessage(
         chatId,
-        `Записано в Notion:\nТип: ${state.type}\nВалюта: ${state.currency}\nСумма: ${
-          state.amount
-        }\nКомментарий: ${state.comment || '-'}\nПользователь: ${state.user}\nДата: ${dateStr}`
+        `✅ *Записано в Notion!*
+
+        *Тип:* ${state.type}
+        *Валюта:* ${
+          state.currency === 'лари'
+            ? '🇬🇪'
+            : state.currency === 'доллар'
+            ? '🇺🇸'
+            : state.currency === 'рубль'
+            ? '🇷🇺'
+            : ''
+        } ${state.currency}
+        *Сумма:* *${state.amount}*
+        *Комментарий:* _${state.comment || '—'}_
+        📅 *Дата:* ${dateStr}`,
+        { parse_mode: 'Markdown' }
       )
       .then(() => {
         resetState(chatId)
@@ -108,15 +121,18 @@ async function handleReport(bot, chatId, period) {
   }
   try {
     const { sums, startDate: s, endDate: e } = await getExpensesReport({ startDate, endDate })
-    let text = `Расходы за период ${s} — ${e} (по данным Notion):`
+    const currencyEmojis = { лари: '🇬🇪', доллар: '🇺🇸', рубль: '🇧🇾' }
+    let text = `📊 *Расходы за период* _${s} — ${e}_:`
     if (Object.keys(sums).length === 0) {
-      text += '\nНет расходов за выбранный период.'
+      text += '\n\n❗️ Нет расходов за выбранный период.'
     } else {
       for (const [cur, sum] of Object.entries(sums)) {
-        text += `\n${cur}: ${sum}`
+        text += `\n${currencyEmojis[cur] || ''} *${
+          cur.charAt(0).toUpperCase() + cur.slice(1)
+        }*: *${sum}*`
       }
     }
-    bot.sendMessage(chatId, text)
+    bot.sendMessage(chatId, text, { parse_mode: 'Markdown' })
   } catch (err) {
     console.error('Notion report error:', err.body || err)
     bot.sendMessage(chatId, 'Ошибка при получении отчёта из Notion.')

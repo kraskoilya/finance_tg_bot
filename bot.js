@@ -34,6 +34,7 @@ const {
   handleReport,
 } = require('./handlers/finance')
 const { getState, resetState, isEmptyState, setState } = require('./handlers/state')
+const { initMonthlyReport } = require('./monthlyReport')
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true })
 
@@ -150,3 +151,5 @@ bot.on('message', msg => {
     )
   }
 })
+
+initMonthlyReport(bot)
