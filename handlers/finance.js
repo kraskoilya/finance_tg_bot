@@ -121,17 +121,21 @@ async function handleReport(bot, chatId, period, msg) {
     startDate = now.toISOString().slice(0, 8) + '01'
   }
   try {
-    const user = USERS[String(msg.from.id)]
-    const { sums, startDate: s, endDate: e } = await getExpensesReport({ startDate, endDate, user })
     const currencyEmojis = { лари: '🇬🇪', доллар: '🇺🇸', рубль: '🇧🇾' }
-    let text = `📊 *Расходы за период* _${s} — ${e}_:`
-    if (Object.keys(sums).length === 0) {
-      text += '\n\n❗️ Нет расходов за выбранный период.'
-    } else {
-      for (const [cur, sum] of Object.entries(sums)) {
-        text += `\n${currencyEmojis[cur] || ''} *${
-          cur.charAt(0).toUpperCase() + cur.slice(1)
-        }*: *${sum}*`
+    let text = `📊 *Расходы по пользователям за период* _${startDate} — ${endDate}_:`
+    let hasAny = false
+    for (const user of Object.values(USERS)) {
+      const { sums } = await getExpensesReport({ startDate, endDate, user })
+      text += `\n\n*${user}:*`
+      if (Object.keys(sums).length === 0) {
+        text += '\n❗️ Нет расходов за выбранный период.'
+      } else {
+        hasAny = true
+        for (const [cur, sum] of Object.entries(sums)) {
+          text += `\n${currencyEmojis[cur] || ''} *${
+            cur.charAt(0).toUpperCase() + cur.slice(1)
+          }*: *${sum}*`
+        }
       }
     }
     bot.sendMessage(chatId, text, { parse_mode: 'Markdown' })
