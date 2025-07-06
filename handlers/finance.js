@@ -6,6 +6,7 @@ const {
   getReportPeriodKeyboard,
 } = require('./keyboard')
 const { getState, setState, resetState, addHistory } = require('./state')
+const { USERS } = require('../config')
 
 async function handleAmountInput(bot, msg, user) {
   const chatId = msg.chat.id
@@ -107,7 +108,7 @@ function handleCurrency(bot, chatId, currency) {
   })
 }
 
-async function handleReport(bot, chatId, period) {
+async function handleReport(bot, chatId, period, msg) {
   let startDate, endDate
   const now = new Date()
   if (period === 'week') {
@@ -120,7 +121,8 @@ async function handleReport(bot, chatId, period) {
     startDate = now.toISOString().slice(0, 8) + '01'
   }
   try {
-    const { sums, startDate: s, endDate: e } = await getExpensesReport({ startDate, endDate })
+    const user = USERS[String(msg.from.id)]
+    const { sums, startDate: s, endDate: e } = await getExpensesReport({ startDate, endDate, user })
     const currencyEmojis = { лари: '🇬🇪', доллар: '🇺🇸', рубль: '🇧🇾' }
     let text = `📊 *Расходы за период* _${s} — ${e}_:`
     if (Object.keys(sums).length === 0) {

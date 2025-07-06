@@ -93,7 +93,7 @@ bot.on('callback_query', async query => {
     }
     if (data.startsWith('report:')) {
       const period = data.split(':')[1]
-      await handleReport(bot, chatId, period)
+      await handleReport(bot, chatId, period, query.message)
       bot.answerCallbackQuery(query.id)
       return
     }

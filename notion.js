@@ -17,7 +17,7 @@ async function addOperation({ type, currency, amount, comment, user, date }) {
   })
 }
 
-async function getExpensesReport({ startDate, endDate }) {
+async function getExpensesReport({ startDate, endDate, user }) {
   // endDateNext — следующий день после endDate
   const endDateObj = new Date(endDate)
   endDateObj.setDate(endDateObj.getDate() + 1)
@@ -26,6 +26,7 @@ async function getExpensesReport({ startDate, endDate }) {
     and: [
       { property: 'Тип', select: { equals: 'Расход' } },
       { property: 'Дата', date: { on_or_after: startDate, before: endDateNext } },
+      ...(user ? [{ property: 'Пользователь', select: { equals: user } }] : []),
     ],
   }
   let results = []
