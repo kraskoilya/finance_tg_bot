@@ -46,6 +46,8 @@ async function getExpensesReport({ startDate, endDate, user }) {
     const props = page.properties
     const currency = props['Валюта']?.select?.name || '—'
     const amount = props['Сумма']?.number || 0
+    const userVal = props['Пользователь']?.select?.name
+    if (user && userVal !== user) continue
     sums[currency] = (sums[currency] || 0) + amount
   }
   return { sums, count: results.length, startDate, endDate }
