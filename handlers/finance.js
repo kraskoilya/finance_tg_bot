@@ -123,18 +123,27 @@ async function handleReport(bot, chatId, period, msg) {
   try {
     const currencyEmojis = { лари: '🇬🇪', доллар: '🇺🇸', рубль: '🇧🇾' }
     let text = `📊 *Расходы по пользователям за период* _${startDate} — ${endDate}_:`
-    let hasAny = false
     for (const user of Object.values(USERS)) {
-      const { sums } = await getExpensesReport({ startDate, endDate, user })
+      const { sums, details } = await getExpensesReport({
+        startDate,
+        endDate,
+        user,
+        withDetails: true,
+      })
       text += `\n\n*${user}:*`
-      if (Object.keys(sums).length === 0) {
+      const currencies = Object.keys(sums)
+      if (currencies.length === 0) {
         text += '\n❗️ Нет расходов за выбранный период.'
       } else {
-        hasAny = true
-        for (const [cur, sum] of Object.entries(sums)) {
+        for (const cur of currencies) {
           text += `\n${currencyEmojis[cur] || ''} *${
             cur.charAt(0).toUpperCase() + cur.slice(1)
-          }*: *${sum}*`
+          }*: *${sums[cur]}*`
+          // Детализация по операциям
+          const ops = (details && details[cur]) || []
+          for (const op of ops) {
+            text += `\n  • ${op.amount} — _${op.comment || '—'}_ (${op.date})`
+          }
         }
       }
     }

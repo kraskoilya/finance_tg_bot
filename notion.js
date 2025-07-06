@@ -17,7 +17,7 @@ async function addOperation({ type, currency, amount, comment, user, date }) {
   })
 }
 
-async function getExpensesReport({ startDate, endDate, user }) {
+async function getExpensesReport({ startDate, endDate, user, withDetails }) {
   // endDateNext — следующий день после endDate
   const endDateObj = new Date(endDate)
   endDateObj.setDate(endDateObj.getDate() + 1)
@@ -42,6 +42,7 @@ async function getExpensesReport({ startDate, endDate, user }) {
   } while (cursor)
   // Группировка по валютам
   const sums = {}
+  const details = {}
   for (const page of results) {
     const props = page.properties
     const currency = props['Валюта']?.select?.name || '—'
@@ -49,8 +50,18 @@ async function getExpensesReport({ startDate, endDate, user }) {
     const userVal = props['Пользователь']?.select?.name
     if (user && userVal !== user) continue
     sums[currency] = (sums[currency] || 0) + amount
+    if (withDetails) {
+      if (!details[currency]) details[currency] = []
+      details[currency].push({
+        amount,
+        comment: props['Комментарий']?.title?.[0]?.plain_text || '',
+        date: props['Дата']?.date?.start || '',
+      })
+    }
   }
-  return { sums, count: results.length, startDate, endDate }
+  return withDetails
+    ? { sums, details, count: results.length, startDate, endDate }
+    : { sums, count: results.length, startDate, endDate }
 }
 
 module.exports = { addOperation, getExpensesReport }
